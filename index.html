@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medicine-me - Sistema Google Drive</title>
+    <title>Medicine-me - Sistema con CIE-10</title>
     
-    <!-- Librería para generar el PDF localmente -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
-    <!-- Librería Oficial de Autenticación de Google -->
     <script src="https://accounts.google.com/gsi/client" onload="initGisClient()" async defer></script>
     
     <style>
@@ -88,7 +86,6 @@
 </head>
 <body>
 
-    <!-- PANEL DE CONTROL -->
     <div class="control-panel">
         <div>
             <button class="btn btn-add" onclick="addMedicationRow()">+ Añadir Medicamento</button>
@@ -100,7 +97,6 @@
         </div>
     </div>
 
-    <!-- DOCUMENTO RECETA -->
     <div class="recipe-container" id="prescription-document">
         <header class="header">
             <div class="logo-container">
@@ -136,10 +132,34 @@
                 <label>Edad</label>
                 <input type="text" placeholder="Ej. 30 años">
             </div>
+            
             <div class="form-group">
                 <label>Diagnóstico (CIE 10)</label>
-                <input type="text" placeholder="Diagnóstico">
+                <input type="text" id="diagnosis-input" list="cie10-list" placeholder="Escribe código o enfermedad...">
+                
+                <datalist id="cie10-list">
+                    <option value="I10 - Hipertensión arterial esencial (primaria)">
+                    <option value="E11.9 - Diabetes mellitus tipo 2 sin complicaciones">
+                    <option value="E11.2 - Diabetes mellitus tipo 2 con complicaciones renales">
+                    <option value="E03.9 - Hipotiroidismo, no especificado">
+                    <option value="E78.5 - Dislipidemia, no especificada">
+                    <option value="E78.0 - Hipercolesterolemia pura">
+                    <option value="E66.9 - Obesidad, no especificada">
+                    <option value="I25.1 - Enfermedad cardíaca aterosclerótica">
+                    <option value="J44.9 - Enfermedad pulmonar obstructiva crónica (EPOC)">
+                    <option value="J45.9 - Asma, no especificada">
+                    <option value="K21.9 - Enfermedad por reflujo gastroesofágico sin esofagitis">
+                    <option value="N18.9 - Enfermedad renal crónica, no especificada">
+                    <option value="M19.9 - Artrosis, no especificada">
+                    <option value="R51 - Cefalea / Dolor de cabeza">
+                    <option value="B34.9 - Infección viral, no especificada">
+                    <option value="A09 - Diarrea y gastroenteritis de presunto origen infeccioso">
+                    <option value="N39.0 - Infección de vías urinarias, sitio no especificado">
+                    <option value="D64.9 - Anemia, no especificada">
+                    <option value="F41.9 - Trastorno de ansiedad, no especificado">
+                </datalist>
             </div>
+            
             <div class="form-group">
                 <label>Alergias</label>
                 <input type="text" placeholder="Ninguna">
@@ -186,19 +206,18 @@
         </div>
     </div>
 
-    <!-- CONTROL INTELEGENTE EN JAVASCRIPT -->
     <script>
         document.getElementById('recipe-date').valueAsDate = new Date();
 
-        // REQUISITO IMPRESCINDIBLE: Configura aquí tus credenciales de Google Developer Console
-        const GOOGLE_CLIENT_ID = '452102936819-kj0ulr5sq8kue5kf6tfdobtsa6rp6knr.apps.googleusercontent.com';
+        // IMPORTANTE: Recuerda mantener aquí tu Client ID generado previamente en Google Cloud
+        const GOOGLE_CLIENT_ID = 'TU_CLIENT_ID_DE_GOOGLE_AQUÍ.apps.googleusercontent.com';
+        
         let tokenClient;
         let accessToken = null;
 
-        // Inicializar el cliente de autenticación de Google
         function initGisClient() {
             if(GOOGLE_CLIENT_ID.includes('TU_CLIENT_ID')) {
-                console.warn("Falta configurar el CLIENT_ID de Google para activar la nube.");
+                console.warn("Falta configurar el CLIENT_ID de Google.");
                 return;
             }
             tokenClient = google.accounts.oauth2.initTokenClient({
@@ -244,14 +263,12 @@
             }
         }
 
-        // Proceso Maestro: Renderiza PDF -> Descarga Local -> Sube a Google Drive
         function exportAndSave() {
             const element = document.getElementById('prescription-document');
             const pName = document.getElementById('patient-name').value || "Paciente_Anonimo";
             const rNum = document.getElementById('recipe-num').value || "000";
             const filename = `Receta_N${rNum}_${pName.replace(/\s+/g, '_')}.pdf`;
 
-            // Ocultar la columna de borrar "X" para el acabado estético del PDF
             const actionHeaders = document.querySelectorAll('.action-column');
             actionHeaders.forEach(el => el.style.opacity = '0');
 
@@ -263,15 +280,10 @@
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            // Generamos el PDF como un archivo binario (Blob)
             html2pdf().set(options).from(element).output('blob').then((pdfBlob) => {
-                // 1. Descarga automática inmediata en el dispositivo (iPhone/PC)
                 html2pdf().set(options).from(element).save();
-
-                // Restaurar la visualización de la pantalla
                 actionHeaders.forEach(el => el.style.opacity = '1');
 
-                // 2. Enviar a Google Drive directo usando la API REST
                 if (accessToken) {
                     uploadFileToGoogleDrive(pdfBlob, filename);
                 }
