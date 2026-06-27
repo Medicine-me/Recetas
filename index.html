@@ -3,340 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medicine-me - Sistema con CIE-10</title>
+    <title>Medicine-me - Formato Dual Pro</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    
-    <script src="https://accounts.google.com/gsi/client" onload="initGisClient()" async defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     
     <style>
         :root {
-            --primary-color: #0076c0;
-            --text-color: #333333;
-            --bg-body: #f4f7f6;
-            --bg-card: #ffffff;
-            --border-color: #d1d5db;
-            --danger-color: #dc2626;
-            --success-color: #16a34a;
-            --google-btn: #4285F4;
+            --primary: #0076c0;
+            --border: #b0c4de;
+            --bg-app: #f0f4f8;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: var(--bg-body); color: var(--text-color); padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Arial', sans-serif; }
+        body { background-color: var(--bg-app); padding: 10px; display: flex; flex-direction: column; align-items: center; }
 
-        /* Contenedor de la receta */
-        .recipe-container {
-            background-color: var(--bg-card);
-            width: 100%;
-            max-width: 850px;
-            padding: 35px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        /* PANEL DE CONTROL (No sale en el PDF) */
+        .control-panel {
+            width: 100%; max-width: 1100px; background: white; padding: 15px;
+            border-radius: 10px; margin-bottom: 15px; display: flex; 
+            justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        /* Cabecera */
-        .header { display: flex; flex-direction: column; align-items: center; text-align: center; border-bottom: 2px solid var(--primary-color); padding-bottom: 15px; margin-bottom: 20px; }
-        .logo-container img { max-width: 220px; height: auto; margin-bottom: 10px; }
-        .doctor-info h1 { font-size: 1.4rem; color: var(--primary-color); font-weight: 700; }
-        .doctor-info p { font-size: 0.9rem; color: #666; margin: 2px 0; }
-
-        /* Bloques de sección */
-        .section-title { background-color: #e6f2fa; color: var(--primary-color); padding: 6px 10px; font-size: 0.95rem; font-weight: bold; margin-top: 20px; margin-bottom: 12px; text-transform: uppercase; }
-        .patient-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-
-        @media (min-width: 600px) {
-            .header { flex-direction: row; justify-content: space-between; text-align: left; }
-            .patient-grid { grid-template-columns: repeat(3, 1fr); }
-            .full-width { grid-column: span 3; }
+        /* CONTENEDOR DUAL (Lo que se imprime) */
+        .dual-recipe-wrapper {
+            display: flex;
+            width: 1100px; /* Ancho optimizado para A4 horizontal o vertical dividido */
+            background: white;
+            min-height: 750px;
+            gap: 0;
+            border: 1px solid #eee;
         }
 
-        .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; color: #555; }
-        .form-group input, .form-group textarea { padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.95rem; outline: none; }
+        /* Cada mitad de la receta */
+        .recipe-half {
+            flex: 1;
+            padding: 25px;
+            border-right: 1px dashed #ccc; /* Línea de corte */
+            position: relative;
+        }
 
-        /* Tabla Dinámica */
-        .table-wrapper { overflow-x: auto; margin-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; min-width: 650px; }
-        th, td { border: 1px solid var(--border-color); padding: 8px; vertical-align: top; }
-        th { background-color: #f8fafc; color: #475569; font-size: 0.9rem; font-weight: 600; }
-        .med-input, .med-textarea { width: 100%; border: 1px solid transparent; font-size: 0.9rem; resize: none; outline: none; padding: 4px; }
-        .med-input:focus, .med-textarea:focus { border-color: var(--border-color); background-color: #fafafa; }
-        .btn-delete-row { background-color: transparent; color: var(--danger-color); border: none; cursor: pointer; font-weight: bold; padding: 4px 8px; }
+        .recipe-half:last-child { border-right: none; }
+
+        /* Cabecera Membrete */
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
+        .logo-box img { max-width: 150px; height: auto; }
+        .doc-info { text-align: right; font-size: 11px; color: #444; }
+        .doc-info h2 { font-size: 15px; color: var(--primary); }
+
+        /* Datos Paciente */
+        .patient-box { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 15px; font-size: 12px; }
+        .field { display: flex; flex-direction: column; }
+        .field label { font-weight: bold; font-size: 10px; color: var(--primary); text-transform: uppercase; }
+        .field input { border: none; border-bottom: 1px solid #ddd; padding: 3px 0; outline: none; font-size: 12px; width: 100%; }
+
+        /* Tablas de Medicamentos */
+        .table-title { background: #eef4f9; padding: 5px; font-size: 11px; font-weight: bold; color: var(--primary); margin-bottom: 8px; text-transform: uppercase; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        th { font-size: 10px; background: #f9f9f9; text-align: left; padding: 5px; border: 1px solid #eee; }
+        td { border: 1px solid #eee; padding: 5px; }
+        textarea { width: 100%; border: none; resize: none; font-size: 12px; outline: none; }
 
         /* Footer y Firma */
-        .footer-sections { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 15px; }
-        @media (min-width: 600px) { .footer-sections { grid-template-columns: 1fr 1fr; } }
-        .signature-container { margin-top: 40px; display: flex; flex-direction: column; align-items: center; text-align: center; }
-        .signature-line { width: 200px; border-top: 1px solid #999; margin-top: 40px; margin-bottom: 5px; }
+        .footer-notes { font-size: 11px; margin-top: 10px; }
+        .signature-area { margin-top: 30px; text-align: center; font-size: 11px; }
+        .sig-line { width: 150px; border-top: 1px solid #999; margin: 0 auto 5px; }
 
-        /* PANEL DE CONTROL DE LA APP */
-        .control-panel {
-            width: 100%; max-width: 850px; background: #e2e8f0; padding: 15px; border-radius: 8px; margin-bottom: 15px;
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
-        }
-
-        .btn { padding: 10px 20px; font-size: 0.95rem; font-weight: bold; border-radius: 6px; cursor: pointer; border: none; transition: background 0.2s; }
-        .btn-add { background-color: var(--success-color); color: white; }
-        .btn-pdf { background-color: var(--primary-color); color: white; }
-        .btn-google { background-color: var(--google-btn); color: white; }
-        .btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
-
-        #auth-status { font-size: 0.9rem; font-weight: bold; color: #475569; }
+        /* Botones */
+        .btn { padding: 10px 18px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; }
+        .btn-add { background: #28a745; color: white; }
+        .btn-pdf { background: var(--primary); color: white; }
+        
+        .no-print-col { text-align: center; width: 30px; }
     </style>
 </head>
 <body>
 
     <div class="control-panel">
-        <div>
-            <button class="btn btn-add" onclick="addMedicationRow()">+ Añadir Medicamento</button>
-        </div>
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <span id="auth-status">Google Drive: Desconectado</span>
-            <button id="btn-login" class="btn btn-google" onclick="handleAuthClick()">Conectar Google</button>
-            <button id="btn-save" class="btn btn-pdf" onclick="exportAndSave()" disabled>Guardar en Google Drive y PDF</button>
+        <button class="btn btn-add" onclick="addRow()">+ Añadir Medicamento</button>
+        <div id="google-tools">
+            <span id="status" style="font-size: 12px; margin-right: 10px;">Google Drive: ⚠️ Configurar ID</span>
+            <button class="btn btn-pdf" id="btn-save" onclick="generatePDF()">Guardar e Imprimir Receta Dual</button>
         </div>
     </div>
 
-    <div class="recipe-container" id="prescription-document">
-        <header class="header">
-            <div class="logo-container">
-                <img src="logo abn.png" alt="Medicine-me" onerror="this.style.display='none';">
+    <div class="dual-recipe-wrapper" id="documento-final">
+        
+        <div class="recipe-half">
+            <div class="header">
+                <div class="logo-box"><img src="logo abn.png" alt="Logo"></div>
+                <div class="doc-info">
+                    <h2>Dr. Byron Trujillo</h2>
+                    <p>Médico Internista</p>
+                    <p>Tel: +593996290299</p>
+                </div>
             </div>
-            <div class="doctor-info">
-                <h1>Dr. Byron Trujillo Ronquillo</h1>
-                <p><strong>Médico Internista</strong></p>
-                <p>Quito: Luis Cordero E5-43 y Reina Victoria</p>
-                <p>Correo: administracion@medicine-me.org | Tel: +593996290299</p>
-            </div>
-        </header>
-
-        <div class="section-title">Datos de la Receta y Paciente</div>
-        <div class="patient-grid">
-            <div class="form-group">
-                <label>Receta N°</label>
-                <input type="text" id="recipe-num" value="001">
-            </div>
-            <div class="form-group">
-                <label>Historia Clínica Nº</label>
-                <input type="text" id="history-num" placeholder="H-N°">
-            </div>
-            <div class="form-group">
-                <label>Fecha de Emisión</label>
-                <input type="date" id="recipe-date">
-            </div>
-            <div class="form-group full-width">
-                <label>Apellidos y Nombres Completos del Paciente</label>
-                <input type="text" id="patient-name" placeholder="Nombre del paciente">
-            </div>
-            <div class="form-group">
-                <label>Edad</label>
-                <input type="text" placeholder="Ej. 30 años">
-            </div>
+            <p style="font-weight:bold; color:var(--primary); text-align:center; margin-bottom:10px;">PRESCRIPCIÓN</p>
             
-            <div class="form-group">
-                <label>Diagnóstico (CIE 10)</label>
-                <input type="text" id="diagnosis-input" list="cie10-list" placeholder="Escribe código o enfermedad...">
-                
-                <datalist id="cie10-list">
-                    <option value="I10 - Hipertensión arterial esencial (primaria)">
-                    <option value="E11.9 - Diabetes mellitus tipo 2 sin complicaciones">
-                    <option value="E11.2 - Diabetes mellitus tipo 2 con complicaciones renales">
-                    <option value="E03.9 - Hipotiroidismo, no especificado">
-                    <option value="E78.5 - Dislipidemia, no especificada">
-                    <option value="E78.0 - Hipercolesterolemia pura">
-                    <option value="E66.9 - Obesidad, no especificada">
-                    <option value="I25.1 - Enfermedad cardíaca aterosclerótica">
-                    <option value="J44.9 - Enfermedad pulmonar obstructiva crónica (EPOC)">
-                    <option value="J45.9 - Asma, no especificada">
-                    <option value="K21.9 - Enfermedad por reflujo gastroesofágico sin esofagitis">
-                    <option value="N18.9 - Enfermedad renal crónica, no especificada">
-                    <option value="M19.9 - Artrosis, no especificada">
-                    <option value="R51 - Cefalea / Dolor de cabeza">
-                    <option value="B34.9 - Infección viral, no especificada">
-                    <option value="A09 - Diarrea y gastroenteritis de presunto origen infeccioso">
-                    <option value="N39.0 - Infección de vías urinarias, sitio no especificado">
-                    <option value="D64.9 - Anemia, no especificada">
-                    <option value="F41.9 - Trastorno de ansiedad, no especificado">
-                </datalist>
+            <div class="patient-box">
+                <div class="field" style="grid-column: span 2;"><label>Paciente</label><input type="text" class="sync-name" placeholder="Nombre completo"></div>
+                <div class="field"><label>H. Clínica</label><input type="text" placeholder="N°"></div>
+                <div class="field"><label>Fecha</label><input type="date" class="sync-date"></div>
+                <div class="field" style="grid-column: span 2;"><label>Diagnóstico (CIE 10)</label><input type="text" placeholder="CIE 10"></div>
             </div>
-            
-            <div class="form-group">
-                <label>Alergias</label>
-                <input type="text" placeholder="Ninguna">
-            </div>
-        </div>
 
-        <div class="section-title">Datos del Medicamento / Dispositivo Médico</div>
-        <div class="table-wrapper">
+            <div class="table-title">Datos del Medicamento</div>
             <table>
-                <thead>
+                <thead><tr><th>Medicamento / DCI</th><th style="width:60px;">Cant.</th><th class="no-print"></th></tr></thead>
+                <tbody id="tabla-prescripcion">
                     <tr>
-                        <th style="width: 45%;">Medicamento (DCI, Forma, Concentración)</th>
-                        <th style="width: 15%;">Cantidad</th>
-                        <th style="width: 33%;">Indicaciones (Dosis, Frecuencia, Duración)</th>
-                        <th class="action-column" style="width: 7%; text-align:center;">X</th>
-                    </tr>
-                </thead>
-                <tbody id="medication-tbody">
-                    <tr>
-                        <td><textarea class="med-textarea" rows="2" placeholder="Medicamento 1"></textarea></td>
-                        <td><input type="text" class="med-input" placeholder="Cantidad"></td>
-                        <td><textarea class="med-textarea" rows="2" placeholder="Indicaciones..."></textarea></td>
-                        <td class="action-column" style="text-align:center;"><button class="btn-delete-row" onclick="deleteRow(this)">X</button></td>
+                        <td><textarea rows="2" class="sync-med" placeholder="Nombre y concentración"></textarea></td>
+                        <td><input type="text" style="width:100%; border:none;" placeholder="Cant."></td>
+                        <td class="no-print no-print-col"><button onclick="removeRow(this)" style="color:red; border:none; background:none; cursor:pointer;">X</button></td>
                     </tr>
                 </tbody>
             </table>
+            <div class="signature-area"><div class="sig-line"></div>Firma y Sello Prescriptor</div>
         </div>
 
-        <div class="footer-sections">
-            <div class="form-group">
-                <label>Recomendaciones No Farmacológicas</label>
-                <textarea rows="3" placeholder="Reposo, dieta..."></textarea>
+        <div class="recipe-half">
+            <div class="header">
+                <div class="logo-box"><img src="logo abn.png" alt="Logo"></div>
+                <div class="doc-info">
+                    <h2>Dr. Byron Trujillo</h2>
+                    <p>Médico Internista</p>
+                    <p>Registro: ACE 1802928034</p>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Signos de Alarma</label>
-                <textarea rows="3" placeholder="Alertas médicas..."></textarea>
-            </div>
-        </div>
+            <p style="font-weight:bold; color:var(--primary); text-align:center; margin-bottom:10px;">INDICACIONES</p>
 
-        <div class="signature-container">
-            <div class="signature-line"></div>
-            <p style="font-size: 0.85rem; font-weight: bold; color: #555;">Firma y Sello del Prescriptor</p>
-            <p style="font-size: 0.8rem; color: #777;">Dr. Byron Trujillo | Registro: ACESS 1802928034</p>
+            <div class="patient-box">
+                <div class="field" style="grid-column: span 2;"><label>Paciente</label><input type="text" class="sync-name-view" readonly></div>
+                <div class="field"><label>Edad</label><input type="text" placeholder="Edad"></div>
+                <div class="field"><label>Fecha</label><input type="text" class="sync-date-view" readonly></div>
+            </div>
+
+            <div class="table-title">Instrucciones de Uso</div>
+            <table id="tabla-indicaciones">
+                <thead><tr><th>Medicamento</th><th>Dosis e Indicaciones</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><textarea rows="2" class="sync-med-view" readonly></textarea></td>
+                        <td><textarea rows="2" placeholder="Dosis, frecuencia, duración..."></textarea></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="footer-notes">
+                <div class="field"><label>Recomendaciones y Alarmas</label><textarea rows="3" placeholder="Signos de alarma, dieta, etc."></textarea></div>
+            </div>
+            <div class="signature-area"><div class="sig-line"></div>Firma y Sello Prescriptor</div>
         </div>
     </div>
 
     <script>
-        document.getElementById('recipe-date').valueAsDate = new Date();
+        // CONFIGURACIÓN DE SEGURIDAD PARA MAC/IPHONE
+        const CLIENT_ID = 'TU_CLIENT_ID_AQUÍ.apps.googleusercontent.com'; 
 
-        // IMPORTANTE: Recuerda mantener aquí tu Client ID generado previamente en Google Cloud
-        const GOOGLE_CLIENT_ID = 'TU_CLIENT_ID_DE_GOOGLE_AQUÍ.apps.googleusercontent.com';
-        
-        let tokenClient;
-        let accessToken = null;
-
-        function initGisClient() {
-            if(GOOGLE_CLIENT_ID.includes('TU_CLIENT_ID')) {
-                console.warn("Falta configurar el CLIENT_ID de Google.");
-                return;
+        window.onload = () => {
+            document.querySelectorAll('.sync-date').forEach(el => el.valueAsDate = new Date());
+            syncData();
+            if(!CLIENT_ID.includes('TU_CLIENT_ID')) {
+                document.getElementById('status').innerText = "⚠️ Falta Client ID en código";
             }
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: GOOGLE_CLIENT_ID,
-                scope: 'https://www.googleapis.com/auth/drive.file',
-                callback: (tokenResponse) => {
-                    if (tokenResponse && tokenResponse.access_token) {
-                        accessToken = tokenResponse.access_token;
-                        document.getElementById('auth-status').innerText = "Google Drive: Conectado ✔";
-                        document.getElementById('btn-login').style.display = 'none';
-                        document.getElementById('btn-save').disabled = false;
-                    }
-                },
+        };
+
+        // Sincronización automática de campos entre ambas mitades
+        function syncData() {
+            const nameInput = document.querySelector('.sync-name');
+            const dateInput = document.querySelector('.sync-date');
+            
+            nameInput.addEventListener('input', () => { document.querySelector('.sync-name-view').value = nameInput.value; });
+            dateInput.addEventListener('change', () => { document.querySelector('.sync-date-view').value = dateInput.value; });
+            
+            document.querySelectorAll('.sync-med').forEach((el, index) => {
+                el.addEventListener('input', () => {
+                    document.querySelectorAll('.sync-med-view')[index].value = el.value;
+                });
             });
         }
 
-        function handleAuthClick() {
-            if (!tokenClient) {
-                alert("La librería de Google aún se está cargando o no tiene un Client ID válido.");
-                return;
-            }
-            tokenClient.requestAccessToken({prompt: 'consent'});
+        function addRow() {
+            const tbodyP = document.getElementById('tabla-prescripcion');
+            const tbodyI = document.getElementById('tabla-indicaciones').querySelector('tbody');
+            
+            const trP = document.createElement('tr');
+            trP.innerHTML = `<td><textarea rows="2" class="sync-med" placeholder="Nombre y concentración"></textarea></td>
+                             <td><input type="text" style="width:100%; border:none;" placeholder="Cant."></td>
+                             <td class="no-print no-print-col"><button onclick="removeRow(this)" style="color:red; border:none; background:none;">X</button></td>`;
+            
+            const trI = document.createElement('tr');
+            trI.innerHTML = `<td><textarea rows="2" class="sync-med-view" readonly></textarea></td>
+                             <td><textarea rows="2" placeholder="Instrucciones..."></textarea></td>`;
+            
+            tbodyP.appendChild(trP);
+            tbodyI.appendChild(trI);
+            syncData();
         }
 
-        function addMedicationRow() {
-            const tbody = document.getElementById('medication-tbody');
-            const newRow = document.createElement('tr');
-            newRow.innerHTML = `
-                <td><textarea class="med-textarea" rows="2" placeholder="Medicamento adicional"></textarea></td>
-                <td><input type="text" class="med-input" placeholder="Cantidad"></td>
-                <td><textarea class="med-textarea" rows="2" placeholder="Indicaciones..."></textarea></td>
-                <td class="action-column" style="text-align:center;"><button class="btn-delete-row" onclick="deleteRow(this)">X</button></td>
-            `;
-            tbody.appendChild(newRow);
+        function removeRow(btn) {
+            const index = Array.from(btn.closest('tbody').children).indexOf(btn.closest('tr'));
+            btn.closest('tr').remove();
+            document.getElementById('tabla-indicaciones').querySelector('tbody').children[index].remove();
         }
 
-        function deleteRow(button) {
-            const tbody = document.getElementById('medication-tbody');
-            if (tbody.rows.length > 1) {
-                button.parentNode.parentNode.remove();
-            } else {
-                alert("Debe haber al menos un medicamento en la prescripción.");
-            }
-        }
+        function generatePDF() {
+            const element = document.getElementById('documento-final');
+            const noPrint = document.querySelectorAll('.no-print');
+            noPrint.forEach(el => el.style.display = 'none');
 
-        function exportAndSave() {
-            const element = document.getElementById('prescription-document');
-            const pName = document.getElementById('patient-name').value || "Paciente_Anonimo";
-            const rNum = document.getElementById('recipe-num').value || "000";
-            const filename = `Receta_N${rNum}_${pName.replace(/\s+/g, '_')}.pdf`;
-
-            const actionHeaders = document.querySelectorAll('.action-column');
-            actionHeaders.forEach(el => el.style.opacity = '0');
-
-            const options = {
-                margin: 10,
-                filename: filename,
+            const opt = {
+                margin: 5,
+                filename: 'Receta_Dual_MedicineMe.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
             };
 
-            html2pdf().set(options).from(element).output('blob').then((pdfBlob) => {
-                html2pdf().set(options).from(element).save();
-                actionHeaders.forEach(el => el.style.opacity = '1');
-
-                if (accessToken) {
-                    uploadFileToGoogleDrive(pdfBlob, filename);
-                }
+            html2pdf().set(opt).from(element).save().then(() => {
+                noPrint.forEach(el => el.style.display = '');
             });
-        }
-
-        function uploadFileToGoogleDrive(blob, filename) {
-            document.getElementById('auth-status').innerText = "Subiendo a Drive...";
-            
-            const reader = new FileReader();
-            reader.readAsDataURL(blob);
-            reader.onloadend = function() {
-                const base64Data = reader.result.split(',')[1];
-                const metadata = {
-                    name: filename,
-                    mimeType: 'application/pdf'
-                };
-                
-                const boundary = 'medicine_me_boundary';
-                const delimiter = "\r\n--" + boundary + "\r\n";
-                const close_delim = "\r\n--" + boundary + "--";
-                
-                const multipartRequestBody =
-                    delimiter +
-                    'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
-                    JSON.stringify(metadata) +
-                    delimiter +
-                    'Content-Type: application/pdf\r\n' +
-                    'Content-Transfer-Encoding: base64\r\n\r\n' +
-                    base64Data +
-                    close_delim;
-
-                fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer ' + accessToken,
-                        'Content-Type': 'multipart/related; boundary=' + boundary
-                    },
-                    body: multipartRequestBody
-                })
-                .then(response => {
-                    if(response.ok) {
-                        document.getElementById('auth-status').innerText = "Google Drive: ¡Guardado con éxito! ✔";
-                        alert("Receta generada en PDF y respaldada con éxito en tu Google Drive.");
-                    } else {
-                        throw new Error("Respuesta incorrecta de Google");
-                    }
-                })
-                .catch(err => {
-                    document.getElementById('auth-status').innerText = "Error al subir";
-                    alert("No se pudo subir a Drive: " + err);
-                });
-            };
         }
     </script>
 </body>
