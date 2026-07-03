@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medicine-me - Sistema de Recetas Dual</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Medicine-me - Sistema de Recetas Dual Pro</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -18,14 +18,25 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Arial', sans-serif; }
         body { background-color: var(--bg-app); padding: 15px; display: flex; flex-direction: column; align-items: center; }
 
-        /* Panel superior de controles de la App */
+        /* Panel superior de controles de la App (Ajustado para pantallas móviles) */
         .control-panel {
             width: 100%; max-width: 1150px; background: white; padding: 15px;
             border-radius: 8px; margin-bottom: 15px; display: flex; 
-            justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
         }
 
-        /* Estructura del documento A4 Horizontal */
+        /* SOLUCIÓN MAESTRA PARA IPHONE/IPAD: Envoltura con desplazamiento de pantalla */
+        .recipe-scroll-wrapper {
+            width: 100%;
+            max-width: 1150px;
+            overflow-x: auto; /* Permite desplazamiento horizontal */
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch; /* Desplazamiento ultra suave nativo en iOS Apple */
+            padding-bottom: 10px;
+        }
+
+        /* Estructura fija del documento A4 Horizontal para la conversión de PDF */
         .dual-recipe-container {
             display: flex;
             width: 1150px;
@@ -56,7 +67,9 @@
         .form-field { display: flex; flex-direction: column; }
         .form-field.full-width { grid-column: span 2; }
         .form-field label { font-size: 10px; font-weight: bold; color: var(--primary); text-transform: uppercase; margin-bottom: 2px; }
-        .form-field input, .form-field textarea { border: none; border-bottom: 1px solid #ccc; padding: 4px 0; outline: none; font-size: 12px; background: transparent; }
+        
+        /* Ajuste de inputs para evitar zoom molesto forzado en iOS Safari */
+        .form-field input, .form-field textarea { border: none; border-bottom: 1px solid #ccc; padding: 4px 0; outline: none; font-size: 14px; background: transparent; }
         .form-field input:focus { border-bottom-color: var(--primary); }
 
         /* Tablas y Secciones de Cuerpo */
@@ -65,7 +78,7 @@
         th { font-size: 10px; background: #f7fafc; color: #555; padding: 6px; border: 1px solid #e2e8f0; text-align: left; }
         td { border: 1px solid #e2e8f0; padding: 6px; vertical-align: top; }
         
-        .table-input { width: 100%; border: none; outline: none; font-size: 12px; resize: none; background: transparent; }
+        .table-input { width: 100%; border: none; outline: none; font-size: 13px; resize: none; background: transparent; }
 
         /* Firmas inferiores */
         .footer-prescriptor { margin-top: 40px; display: flex; flex-direction: column; align-items: center; text-align: center; font-size: 11px; color: #333; }
@@ -78,7 +91,7 @@
         .btn:disabled { background-color: #cbd5e1; cursor: not-allowed; }
 
         .no-print-actions { text-align: center; width: 35px; vertical-align: middle; }
-        .btn-remove { color: #dc2626; border: none; background: none; font-weight: bold; cursor: pointer; }
+        .btn-remove { color: #dc2626; border: none; background: none; font-weight: bold; cursor: pointer; font-size: 16px; }
     </style>
 </head>
 <body>
@@ -91,107 +104,111 @@
         </div>
     </div>
 
-    <div class="dual-recipe-container" id="prescription-document">
+    <div class="recipe-scroll-wrapper">
         
-        <div class="recipe-column left-column">
-            <div class="header-container">
-                <div class="logo-box"><img src="logo abn.png" alt="Medicine-me"></div>
-                <div class="doc-info">
-                    <h2>Dr. Byron Trujillo Ronquillo</h2>
-                    <p>Médico Internista</p>
-                    <p>Quito: Luis Cordero E5-43 y Reina Victoria</p>
-                    <p>administracion@medicine-me.org | +593996290299</p>
+        <div class="dual-recipe-container" id="prescription-document">
+            
+            <div class="recipe-column left-column">
+                <div class="header-container">
+                    <div class="logo-box"><img src="logo abn.png" alt="Medicine-me"></div>
+                    <div class="doc-info">
+                        <h2>Dr. Byron Trujillo Ronquillo</h2>
+                        <p>Médico Internista</p>
+                        <p>Quito: Luis Cordero E5-43 y Reina Victoria</p>
+                        <p>administracion@medicine-me.org | +593996290299</p>
+                    </div>
+                </div>
+                
+                <div class="prescription-title">PRESCRIPCIÓN MÉDICA</div>
+                
+                <div class="patient-section">
+                    <div class="form-field"><label>Receta N°</label><input type="text" id="recipe-num" value="2026001"></div>
+                    <div class="form-field"><label>Fecha (DD/MM/AAAA)</label><input type="text" id="recipe-date"></div>
+                    <div class="form-field full-width"><label>Apellidos y Nombres Completos</label><input type="text" class="input-sync-name" placeholder="Escriba aquí"></div>
+                    <div class="form-field"><label>Edad</label><input type="text" class="input-sync-age" placeholder="Ej. 69 Años"></div>
+                    <div class="form-field"><label>Vigencia de la Receta (Días)</label><input type="text" placeholder="Ej. 30 días"></div>
+                    <div class="form-field"><label>Diagnóstico (CIE 10)</label><input type="text" class="input-sync-cie" list="cie10-data" placeholder="Código o enfermedad"></div>
+                    <div class="form-field"><label>Antecedentes de Alergias</label><input type="text" class="input-sync-allergies" placeholder="Ninguna"></div>
+                </div>
+
+                <div class="block-title">Cuerpo de la Receta</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Datos del Fármaco / Dispositivo Médico</th>
+                            <th style="width: 120px;">Cantidad</th>
+                            <th class="no-print-target" style="width: 35px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-prescription">
+                        <tr>
+                            <td><textarea rows="2" class="table-input med-name-sync" placeholder="DCI, Forma farmacéutica, concentración, vía..."></textarea></td>
+                            <td><input type="text" class="table-input" placeholder="Números y letras"></td>
+                            <td class="no-print-target no-print-actions"><button class="btn-remove" onclick="removeMedicationRow(this)">X</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="footer-prescriptor">
+                    <div class="signature-line"></div>
+                    <p><strong>TRUJILLO RONQUILLO BYRON FERNANDO</strong></p>
+                    <p>MÉDICO INTERNISTA - REGISTRO ACESS: 1802928034</p>
+                    <p>Contacto / Firma</p>
+                </div>
+            </div>
+
+            <div class="recipe-column">
+                <div class="header-container">
+                    <div class="logo-box"><img src="logo abn.png" alt="Medicine-me"></div>
+                    <div class="doc-info">
+                        <h2>Dr. Byron Trujillo Ronquillo</h2>
+                        <p>Médico Internista</p>
+                        <p>Quito: Luis Cordero E5-43 y Reina Victoria</p>
+                        <p>administracion@medicine-me.org | +593996290299</p>
+                    </div>
+                </div>
+                
+                <div class="prescription-title">INDICACIONES PARA EL PACIENTE</div>
+                
+                <div class="patient-section">
+                    <div class="form-field"><label>Receta N°</label><input type="text" id="recipe-num-view" readonly></div>
+                    <div class="form-field"><label>Fecha (DD/MM/AAAA)</label><input type="text" id="recipe-date-view" readonly></div>
+                    <div class="form-field full-width"><label>Apellidos y Nombres Completos</label><input type="text" id="patient-name-view" readonly></div>
+                    <div class="form-field"><label>Edad</label><input type="text" id="patient-age-view" readonly></div>
+                    <div class="form-field"><label>Diagnóstico (CIE 10)</label><input type="text" id="patient-cie-view" readonly></div>
+                    <div class="form-field"><label>Antecedentes de Alergias</label><input type="text" id="patient-allergies-view" readonly></div>
+                </div>
+
+                <div class="block-title">Instrucciones de Dosificación</div>
+                <table id="table-indications-view">
+                    <thead>
+                        <tr>
+                            <th>Medicamento</th>
+                            <th>Dosis e Indicaciones / Duración del Tratamiento</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><textarea rows="2" class="table-input med-name-view" readonly></textarea></td>
+                            <td><textarea rows="2" class="table-input" placeholder="Dosis, frecuencia, horas, duración..."></textarea></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="block-title">Recomendaciones del Especialista</div>
+                <div class="patient-section" style="grid-template-columns: 1fr; gap: 8px;">
+                    <div class="form-field"><label>Signos de Alarma</label><textarea rows="2" class="table-input" placeholder="Especificar alertas..."></textarea></div>
+                    <div class="form-field"><label>Recomendaciones No Farmacológicas</label><textarea rows="2" class="table-input" placeholder="Dieta, reposo, ejercicios..."></textarea></div>
+                </div>
+
+                <div class="footer-prescriptor">
+                    <div class="signature-line"></div>
+                    <p><strong>TRUJILLO RONQUILLO BYRON FERNANDO</strong></p>
+                    <p>MÉDICO INTERNISTA - REGISTRO ACESS: 1802928034</p>
+                    <p>Contacto / Firma</p>
                 </div>
             </div>
             
-            <div class="prescription-title">PRESCRIPCIÓN MÉDICA</div>
-            
-            <div class="patient-section">
-                <div class="form-field"><label>Receta N°</label><input type="text" id="recipe-num" value="2026001"></div>
-                <div class="form-field"><label>Fecha (DD/MM/AAAA)</label><input type="text" id="recipe-date"></div>
-                <div class="form-field full-width"><label>Apellidos y Nombres Completos</label><input type="text" class="input-sync-name" placeholder="Escriba aquí"></div>
-                <div class="form-field"><label>Edad</label><input type="text" class="input-sync-age" placeholder="Ej. 45 años"></div>
-                <div class="form-field"><label>Vigencia de la Receta (Días)</label><input type="text" placeholder="Ej. 30 días"></div>
-                <div class="form-field"><label>Diagnóstico (CIE 10)</label><input type="text" class="input-sync-cie" list="cie10-data" placeholder="Código o enfermedad"></div>
-                <div class="form-field"><label>Antecedentes de Alergias</label><input type="text" class="input-sync-allergies" placeholder="Ninguna"></div>
-            </div>
-
-            <div class="block-title">Cuerpo de la Receta</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Datos del Fármaco / Dispositivo Médico</th>
-                        <th style="width: 100px;">Cantidad</th>
-                        <th class="no-print-target" style="width: 35px;"></th>
-                    </tr>
-                </thead>
-                <tbody id="tbody-prescription">
-                    <tr>
-                        <td><textarea rows="2" class="table-input med-name-sync" placeholder="DCI, Forma farmacéutica, concentración, vía..."></textarea></td>
-                        <td><input type="text" class="table-input" placeholder="Números y letras"></td>
-                        <td class="no-print-target no-print-actions"><button class="btn-remove" onclick="removeMedicationRow(this)">X</button></td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <div class="footer-prescriptor">
-                <div class="signature-line"></div>
-                <p><strong>TRUJILLO RONQUILLO BYRON FERNANDO</strong></p>
-                <p>MÉDICO INTERNISTA - REGISTRO ACESS: 1802928034</p>
-                <p>Contacto / Firma</p>
-            </div>
-        </div>
-
-        <div class="recipe-column">
-            <div class="header-container">
-                <div class="logo-box"><img src="logo abn.png" alt="Medicine-me"></div>
-                <div class="doc-info">
-                    <h2>Dr. Byron Trujillo Ronquillo</h2>
-                    <p>Médico Internista</p>
-                    <p>Quito: Luis Cordero E5-43 y Reina Victoria</p>
-                    <p>administracion@medicine-me.org | +593996290299</p>
-                </div>
-            </div>
-            
-            <div class="prescription-title">INDICACIONES PARA EL PACIENTE</div>
-            
-            <div class="patient-section">
-                <div class="form-field"><label>Receta N°</label><input type="text" id="recipe-num-view" readonly></div>
-                <div class="form-field"><label>Fecha (DD/MM/AAAA)</label><input type="text" id="recipe-date-view" readonly></div>
-                <div class="form-field full-width"><label>Apellidos y Nombres Completos</label><input type="text" id="patient-name-view" readonly></div>
-                <div class="form-field"><label>Edad</label><input type="text" id="patient-age-view" readonly></div>
-                <div class="form-field"><label>Diagnóstico (CIE 10)</label><input type="text" id="patient-cie-view" readonly></div>
-                <div class="form-field"><label>Antecedentes de Alergias</label><input type="text" id="patient-allergies-view" readonly></div>
-            </div>
-
-            <div class="block-title">Instrucciones de Dosificación</div>
-            <table id="table-indications-view">
-                <thead>
-                    <tr>
-                        <th>Medicamento</th>
-                        <th>Dosis e Indicaciones / Duración del Tratamiento</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><textarea rows="2" class="table-input med-name-view" readonly></textarea></td>
-                        <td><textarea rows="2" class="table-input" placeholder="Dosis, frecuencia, horas, duración..."></textarea></td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <div class="block-title">Recomendaciones del Especialista</div>
-            <div class="patient-section" style="grid-template-columns: 1fr; gap: 8px;">
-                <div class="form-field"><label>Signos de Alarma</label><textarea rows="2" class="table-input" placeholder="Especificar alertas..."></textarea></div>
-                <div class="form-field"><label>Recomendaciones No Farmacológicas</label><textarea rows="2" class="table-input" placeholder="Dieta, reposo, ejercicios..."></textarea></div>
-            </div>
-
-            <div class="footer-prescriptor">
-                <div class="signature-line"></div>
-                <p><strong>TRUJILLO RONQUILLO BYRON FERNANDO</strong></p>
-                <p>MÉDICO INTERNISTA - REGISTRO ACESS: 1802928034</p>
-                <p>Contacto / Firma</p>
-            </div>
         </div>
     </div>
 
@@ -205,13 +222,13 @@
     </datalist>
 
     <script>
-        // TU ID DE INTEGRACIÓN OFICIAL
+        // CONFIGURACIÓN OFICIAL PROPIA VINCULADA
         const GOOGLE_CLIENT_ID = '452102936819-kj0ulr5sq8kue5kf6tfdobtsa6rp6knr.apps.googleusercontent.com';
 
         let tokenClient;
         let accessToken = null;
 
-        // Inicialización estructurada post-carga del DOM para navegadores de Apple
+        // Inicialización estructurada post-carga segura del DOM
         window.addEventListener('DOMContentLoaded', () => {
             setupAutomaticDate();
             initializeRealTimeSync();
@@ -275,11 +292,12 @@
             const allergies = document.querySelector('.input-sync-allergies');
             allergies.addEventListener('input', () => document.getElementById('patient-allergies-view').value = allergies.value);
 
+            // Escuchar cambios en nombres de fármacos de forma dinámica
             document.querySelectorAll('.med-name-sync').forEach((el, index) => {
-                el.addEventListener('input', () => {
+                el.oninput = () => {
                     const views = document.querySelectorAll('.med-name-view');
                     if (views[index]) views[index].value = el.value;
-                });
+                };
             });
         }
 
